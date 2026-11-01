@@ -6,17 +6,28 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from core import database as db
+from core.routing import find_nearest
 
 st.set_page_config(page_title="Smart Parking Finder", page_icon="🅿️", layout="wide")
 db.init_db()
 
 
-def build_map(spaces, entrances):
+def build_map(spaces, entrances, best_label=None):
     df = pd.DataFrame(spaces)
     df["status"] = df["is_occupied"].map({0: "Available", 1: "Occupied"})
     df["color"] = df["is_occupied"].map({0: "#2ecc71", 1: "#e74c3c"})
 
     fig = go.Figure()
+
+    # gold halo behind the recommended bay
+    if best_label:
+        best = df[df["label"] == best_label]
+        fig.add_trace(go.Scatter(
+            x=best["map_x"], y=best["map_y"], mode="markers",
+            marker=dict(symbol="square", size=46, color="#f1c40f"),
+            hoverinfo="skip", showlegend=False,
+        ))
+
     fig.add_trace(go.Scatter(
         x=df["map_x"], y=df["map_y"], mode="markers+text",
         text=df["label"], textposition="middle center",
@@ -46,8 +57,11 @@ def build_map(spaces, entrances):
 
 
 @st.fragment(run_every=5)          # re-reads the database every 5 seconds
-def live_view():
+def live_view(entrance_name):
+    entrances = db.get_setting("entrances", {})
     s = db.get_summary()
+    spaces = db.get_spaces()
+
     c1, c2, c3 = st.columns(3)
     c1.metric("Total spaces", s["total"])
     c2.metric("🟢 Available", s["available"])
@@ -57,12 +71,27 @@ def live_view():
     st.progress(pct, text=f"{pct:.0%} full")
     st.caption(f"🕒 Last updated: {s['last_updated']}")
 
+    nearest = find_nearest(spaces, entrances[entrance_name]) if entrance_name in entrances else []
+    if nearest:
+        best = nearest[0]
+        st.success(f"⭐ Closest free bay from **{entrance_name}**: "
+                   f"**{best['label']}** (about {best['distance_m']} m)")
+    elif s["total"]:
+        st.error("The car park is currently full.")
+
     st.subheader("Parking map")
-    st.plotly_chart(build_map(db.get_spaces(), db.get_setting("entrances", {})))
+    st.plotly_chart(build_map(spaces, entrances, nearest[0]["label"] if nearest else None))
+
+    if len(nearest) > 1:
+        st.caption("Next best options: " + ", ".join(
+            f"{n['label']} ({n['distance_m']} m)" for n in nearest[1:]))
 
 
 st.title("🅿️ Smart Parking Finder")
-live_view()
+
+entrances = db.get_setting("entrances", {})
+entrance_name = st.selectbox("Which entrance are you using?", list(entrances.keys())) if entrances else None
+live_view(entrance_name)
 
 with st.expander("📈 Occupancy history (preview)"):
     hist = db.get_history()
@@ -71,4 +100,3 @@ with st.expander("📈 Occupancy history (preview)"):
     else:
         recent = hist[hist["timestamp"] > hist["timestamp"].max() - pd.Timedelta(hours=48)]
         st.line_chart(recent.set_index("timestamp")["occupied"])
-        
