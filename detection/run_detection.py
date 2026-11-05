@@ -25,7 +25,7 @@ def main():
     ap.add_argument("--source", required=True, help="video file, image folder, or webcam index")
     ap.add_argument("--every", type=float, default=1.0, help="seconds between analysed video frames")
     ap.add_argument("--conf", type=float, default=0.10)
-    ap.add_argument("--imgsz", type=int, default=1280)
+    ap.add_argument("--imgsz", type=int, default=960)
     ap.add_argument("--max", type=int, default=0, help="stop after N frames (0 = no limit)")
     ap.add_argument("--loop", action="store_true", help="restart when the source ends (good for demos)")
     args = ap.parse_args()

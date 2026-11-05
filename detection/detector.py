@@ -6,7 +6,7 @@ VEHICLE_CLASSES = [2, 3, 5, 7, 67]
 
 
 class VehicleDetector:
-    def __init__(self, model_path="yolov8m.pt", conf=0.10, imgsz=1280):
+    def __init__(self, model_path="yolov8m.pt", conf=0.10, imgsz=960):
         self.model = YOLO(model_path)
         self.conf = conf
         self.imgsz = imgsz
