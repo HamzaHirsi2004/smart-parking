@@ -114,3 +114,25 @@ def get_setting(key, default=None):
     with get_conn() as conn:
         row = conn.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
     return json.loads(row["value"]) if row else default
+
+
+def delete_space(label):
+    with get_conn() as conn:
+        conn.execute("DELETE FROM spaces WHERE label=?", (label,))
+
+
+def clear_spaces():
+    with get_conn() as conn:
+        conn.execute("DELETE FROM spaces")
+
+
+def clear_history():
+    with get_conn() as conn:
+        conn.execute("DELETE FROM occupancy_log")
+
+
+def update_map_coords(coords: dict):
+    """coords = {"P1": (x, y), ...} in customer-map units"""
+    with get_conn() as conn:
+        for label, (x, y) in coords.items():
+            conn.execute("UPDATE spaces SET map_x=?, map_y=? WHERE label=?", (x, y, label))

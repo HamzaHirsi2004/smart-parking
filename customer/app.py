@@ -61,6 +61,9 @@ def live_view(entrance_name):
     entrances = db.get_setting("entrances", {})
     s = db.get_summary()
     spaces = db.get_spaces()
+    if not spaces:
+        st.info("No parking bays have been configured yet.")
+        return
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Total spaces", s["total"])
@@ -76,7 +79,7 @@ def live_view(entrance_name):
         best = nearest[0]
         st.success(f"⭐ Closest free bay from **{entrance_name}**: "
                    f"**{best['label']}** (about {best['distance_m']} m)")
-    elif s["total"]:
+    elif s["total"] and s["available"] == 0:
         st.error("The car park is currently full.")
 
     st.subheader("Parking map")
