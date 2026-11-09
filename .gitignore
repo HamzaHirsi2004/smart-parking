@@ -4,3 +4,6 @@ data/*.db
 data/*.mp4
 *.pt
 data/pklot/
+data/*.db-*
+data/latest_frame.jpg
+data/reference_frame.jpg
