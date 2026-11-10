@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from core import database as db
 from core.routing import find_nearest
+from core import forecast
 
 st.set_page_config(page_title="Smart Parking Finder", page_icon="🅿️", layout="wide")
 db.init_db()
@@ -103,3 +104,13 @@ with st.expander("📈 Occupancy history (preview)"):
     else:
         recent = hist[hist["timestamp"] > hist["timestamp"].max() - pd.Timedelta(hours=48)]
         st.line_chart(recent.set_index("timestamp")["occupied"])
+
+with st.expander("🔮 Predicted busy times (next 24 hours)"):
+    pred = forecast.predict_future(24)
+    if pred.empty:
+        st.info("Predictions are not available yet.")
+    else:
+        st.line_chart(pred.set_index("timestamp")["predicted_pct"])
+        quiet = pred.loc[pred["predicted_pct"].idxmin()]
+        st.caption(f"Quietest expected time: **{quiet['timestamp']:%a %H:%M}** "
+                   f"(about {quiet['predicted_pct']:.0f}% full)")
