@@ -4,9 +4,8 @@ data/*.db
 data/*.db-*
 data/*.mp4
 data/pklot/
-data/pklot_history.csv
-data/latest_frame*.jpg
+data/latest_frame.jpg
 data/reference_frame.jpg
-data/test*.jpg
-data/*.joblib
+data/occupancy_model.joblib
+data/pklot_history.csv
 *.pt
