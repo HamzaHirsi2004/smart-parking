@@ -4,5 +4,7 @@ numpy
 opencv-python
 ultralytics
 scikit-learn
+joblib
 plotly
+pillow
 streamlit-image-coordinates
