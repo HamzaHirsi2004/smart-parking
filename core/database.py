@@ -39,6 +39,13 @@ def init_db():
             key   TEXT PRIMARY KEY,
             value TEXT
         );
+
+        CREATE TABLE IF NOT EXISTS events (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            label     TEXT NOT NULL,
+            event     TEXT NOT NULL      -- 'occupied' or 'vacated'
+        );
         """)
 
 
@@ -63,12 +70,21 @@ def get_spaces():
 
 
 def update_statuses(status_by_label: dict):
-    """status_by_label = {"A1": 1, "A2": 0, ...}  (1 = occupied)"""
+    """status_by_label = {"P1": 1, "P2": 0, ...}  (1 = occupied)"""
+    ts = now()
     with get_conn() as conn:
+        prev = {r["label"]: r["is_occupied"]
+                for r in conn.execute("SELECT label, is_occupied FROM spaces")}
         for label, occ in status_by_label.items():
+            occ = int(occ)
+            if label in prev and prev[label] != occ:
+                conn.execute(
+                    "INSERT INTO events (timestamp, label, event) VALUES (?,?,?)",
+                    (ts, label, "occupied" if occ else "vacated"),
+                )
             conn.execute(
                 "UPDATE spaces SET is_occupied=?, updated_at=? WHERE label=?",
-                (int(occ), now(), label),
+                (occ, ts, label),
             )
 
 
@@ -137,3 +153,15 @@ def update_map_coords(coords: dict):
     with get_conn() as conn:
         for label, (x, y) in coords.items():
             conn.execute("UPDATE spaces SET map_x=?, map_y=? WHERE label=?", (x, y, label))
+
+def get_events(limit=500):
+    import pandas as pd
+    with get_conn() as conn:
+        return pd.read_sql_query(
+            "SELECT * FROM events ORDER BY id DESC LIMIT ?", conn, params=(limit,)
+        )
+
+
+def clear_events():
+    with get_conn() as conn:
+        conn.execute("DELETE FROM events")
