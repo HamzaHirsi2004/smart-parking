@@ -7,3 +7,5 @@ data/pklot/
 data/*.db-*
 data/latest_frame.jpg
 data/reference_frame.jpg
+data/occupancy_model.joblib
+data/pklot_history.csv
