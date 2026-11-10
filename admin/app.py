@@ -4,7 +4,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
 from core import database as db
-from admin import bay_editor, live_monitor, stats_view
+from admin import bay_editor, live_monitor, stats_view, predictions
 
 st.set_page_config(page_title="Smart Parking Control Centre", page_icon="🛠️", layout="wide")
 db.init_db()
@@ -22,4 +22,4 @@ with tab_stats:
 with tab_config:
     bay_editor.render()
 with tab_pred:
-    st.info("Occupancy forecasting arrives in Step 8.")
+    predictions.render()
